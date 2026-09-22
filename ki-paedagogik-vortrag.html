@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Wie künstliche Intelligenz uns pädagogisch herausfordert</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,300;12..96,400;12..96,500;12..96,600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --paper: #f2f2ee;
+    --ink: #15171c;
+    --muted: #6b6e76;
+    --line: #cfd0ca;
+    --a: #1b6a5c;      /* Richtung: Chance */
+    --b: #7a2c5a;      /* Richtung: Risiko */
+    --a-soft: #d9ebe6;
+    --b-soft: #efdbe6;
+    box-sizing: border-box;
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --paper: #16181d; --ink: #ecebe5; --muted: #9a9ca4; --line: #33363d;
+      --a: #63c1a8; --b: #d98fbf; --a-soft: #1d2f2b; --b-soft: #33202c;
+    }
+  }
+  :root[data-theme="dark"] {
+    --paper: #16181d; --ink: #ecebe5; --muted: #9a9ca4; --line: #33363d;
+    --a: #63c1a8; --b: #d98fbf; --a-soft: #1d2f2b; --b-soft: #33202c;
+  }
+
+  *, *::before, *::after { box-sizing: inherit; }
+  html { height: 100%; scroll-padding-top: env(safe-area-inset-top, 0px); }
+  body {
+    height: 100%; margin: 0;
+    background: var(--paper); color: var(--ink);
+    font-family: "Bricolage Grotesque", "Helvetica Neue", Arial, sans-serif;
+    font-weight: 300;
+    font-size: clamp(17px, 1.5vw + 8px, 26px);
+    line-height: 1.45;
+    -webkit-font-smoothing: antialiased;
+    overflow: hidden;
+  }
+
+  .deck { position: relative; height: 100%; width: 100%; }
+
+  .slide {
+    position: absolute; inset: 0;
+    display: none;
+    flex-direction: column;
+    padding: clamp(28px, 6vh, 72px) clamp(24px, 7vw, 120px);
+    max-width: 1500px; margin: 0 auto;
+  }
+  .slide.is-active { display: flex; }
+
+  .top {
+    display: flex; justify-content: space-between; align-items: baseline;
+    color: var(--muted); font-size: 0.72em; font-weight: 400;
+    min-height: 1.4em;
+  }
+  .body { flex: 1; display: flex; flex-direction: column; justify-content: center; min-height: 0; }
+
+  h1, h2 {
+    font-weight: 500; letter-spacing: -0.02em; margin: 0;
+    font-variation-settings: "opsz" 96;
+    text-wrap: balance;
+  }
+  h1 { font-size: clamp(2.3em, 6.5vw, 4.6em); line-height: 1.02; max-width: 12ch; }
+  h2 { font-size: clamp(1.7em, 4.4vw, 3.2em); line-height: 1.08; max-width: 18ch; }
+  h2.wide { max-width: 26ch; }
+  p { margin: 0; max-width: 34ch; }
+  .lead { font-size: 1.15em; margin-top: 1.1em; color: var(--ink); }
+  .note { color: var(--muted); margin-top: 1.4em; font-size: 0.85em; }
+  .sub { color: var(--muted); font-size: 1.05em; margin-top: 1em; max-width: 30ch; }
+
+  /* Zwei Richtungen */
+  .split {
+    display: grid; grid-template-columns: 1fr 1fr; gap: clamp(24px, 5vw, 96px);
+    margin-top: clamp(20px, 4vh, 48px);
+  }
+  .dir { border-top: 3px solid; padding-top: 0.7em; }
+  .dir.a { border-color: var(--a); }
+  .dir.b { border-color: var(--b); }
+  .dir .tag { font-weight: 500; font-size: 0.8em; display: block; margin-bottom: 0.5em; }
+  .dir.a .tag { color: var(--a); }
+  .dir.b .tag { color: var(--b); }
+  .dir p { max-width: 26ch; }
+  .dir p + p { margin-top: 0.6em; }
+  .kern {
+    margin-top: clamp(20px, 4vh, 44px); font-weight: 500; font-size: 1.05em;
+    max-width: 40ch; letter-spacing: -0.01em;
+  }
+
+  /* Gegenüberstellung als Paare */
+  .pairs { list-style: none; padding: 0; margin: clamp(20px, 4vh, 44px) 0 0; display: grid; gap: 0.55em; max-width: 34ch; }
+  .pairs li { display: grid; grid-template-columns: 1fr auto 1fr; align-items: baseline; gap: 0.6em; font-size: 1.1em; }
+  .pairs .l { color: var(--a); text-align: right; font-weight: 500; }
+  .pairs .r { color: var(--b); font-weight: 500; }
+  .pairs .m { color: var(--muted); font-weight: 300; }
+
+  /* Listen */
+  ul.plain { list-style: none; padding: 0; margin: clamp(18px, 3vh, 36px) 0 0; display: grid; gap: 0.45em; max-width: 40ch; }
+  ul.plain li { padding-left: 1.1em; position: relative; }
+  ul.plain li::before { content: ""; position: absolute; left: 0; top: 0.62em; width: 0.45em; height: 2px; background: var(--ink); }
+  ul.plain.risk li::before { background: var(--b); }
+  ul.plain.chance li::before { background: var(--a); }
+  ul.plain.two { grid-template-columns: 1fr 1fr; column-gap: 3em; max-width: 60ch; }
+
+  ol.steps { list-style: none; padding: 0; margin: clamp(18px, 3vh, 36px) 0 0; counter-reset: s; display: grid; gap: 0.55em; max-width: 44ch; }
+  ol.steps li { counter-increment: s; display: grid; grid-template-columns: 2.2em 1fr; gap: 0.4em; align-items: baseline; }
+  ol.steps li::before { content: counter(s); font-weight: 500; color: var(--a); font-variant-numeric: tabular-nums; }
+
+  .questions { margin-top: clamp(18px, 3vh, 36px); display: grid; gap: 0.9em; max-width: 48ch; }
+  .questions p { max-width: none; font-size: 1.1em; font-weight: 400; padding-left: 1em; border-left: 2px solid var(--line); }
+
+  .big { font-size: clamp(1.9em, 5vw, 3.6em); font-weight: 500; line-height: 1.06; letter-spacing: -0.02em; max-width: 16ch; text-wrap: balance; }
+  .big .a { color: var(--a); } .big .b { color: var(--b); }
+
+  /* Fußzeile */
+  .hud {
+    position: fixed; left: 0; right: 0; bottom: 0;
+    padding: 0 clamp(16px, 3vw, 40px) calc(12px + env(safe-area-inset-bottom, 0px));
+    display: flex; justify-content: space-between; align-items: flex-end;
+    color: var(--muted); font-size: 0.7em; font-weight: 400; pointer-events: none;
+  }
+  .progress { position: fixed; left: 0; bottom: env(safe-area-inset-bottom, 0px); height: 3px; background: var(--ink); width: 0; transition: width .25s ease; }
+  .hint { position: fixed; right: clamp(16px,3vw,40px); top: calc(14px + env(safe-area-inset-top,0px)); color: var(--muted); font-size: 0.7em; font-weight: 400; transition: opacity .6s; }
+  .hint.hide { opacity: 0; }
+
+  .nav { position: fixed; top: 0; bottom: 0; width: 50%; background: transparent; border: 0; cursor: pointer; padding: 0; }
+  .nav:focus-visible { outline: 3px solid var(--a); outline-offset: -3px; }
+  .nav.prev { left: 0; } .nav.next { right: 0; }
+
+  @media (max-width: 760px) {
+    .split, ul.plain.two { grid-template-columns: 1fr; }
+    .pairs li { grid-template-columns: 1fr; gap: 0; }
+    .pairs .l { text-align: left; }
+    .pairs .m { display: none; }
+    h1 { max-width: none; } h2 { max-width: none; }
+  }
+  @media (prefers-reduced-motion: reduce) { .progress { transition: none; } }
+
+  @media print {
+    body { overflow: visible; height: auto; }
+    .deck { height: auto; }
+    .slide { display: flex !important; position: relative; inset: auto; height: 100vh; page-break-after: always; }
+    .hud, .progress, .hint, .nav { display: none; }
+  }
+</style>
+</head>
+<body>
+<div class="deck" id="deck">
+
+  <!-- 1 -->
+  <section class="slide">
+    <div class="top"><span></span><span></span></div>
+    <div class="body">
+      <h1>Wie künstliche Intelligenz uns pädagogisch herausfordert</h1>
+      <p class="sub">Ein Werkzeug, das in beide Richtungen wirkt – und was das von uns verlangt.</p>
+    </div>
+  </section>
+
+  <!-- 2 -->
+  <section class="slide">
+    <div class="top"><span>Ausgangslage</span><span></span></div>
+    <div class="body">
+      <h2>Die Frage ist nicht mehr, ob.</h2>
+      <p class="lead">Schülerinnen und Schüler nutzen KI. Jetzt. In den Hausaufgaben, beim Referat, in der Nacht vor der Klausur – ob wir es erlauben oder nicht.</p>
+      <p class="note">Die Frage ist, wie – und wer die Richtung bestimmt.</p>
+    </div>
+  </section>
+
+  <!-- 3 -->
+  <section class="slide">
+    <div class="top"><span>These</span><span></span></div>
+    <div class="body">
+      <h2>KI ist ein Verstärker.</h2>
+      <p class="lead">Was hineingeht, kommt größer heraus. Gute Pädagogik wird besser. Schwache Pädagogik auch – nur schneller.</p>
+      <p class="note">Das ist keine Technikfrage. Das ist eine Frage an uns.</p>
+    </div>
+  </section>
+
+  <!-- 4 -->
+  <section class="slide">
+    <div class="top"><span>Zwei Richtungen</span><span></span></div>
+    <div class="body">
+      <h2 class="wide">Dieselbe Technik. Zwei Wege.</h2>
+      <ul class="pairs">
+        <li><span class="l">Entlastung</span><span class="m">oder</span><span class="r">Entmündigung</span></li>
+        <li><span class="l">Vertiefung</span><span class="m">oder</span><span class="r">Abkürzung</span></li>
+        <li><span class="l">Gerechtigkeit</span><span class="m">oder</span><span class="r">neue Kluft</span></li>
+        <li><span class="l">Nähe</span><span class="m">oder</span><span class="r">Ersatz</span></li>
+        <li><span class="l">Urteilskraft</span><span class="m">oder</span><span class="r">Gläubigkeit</span></li>
+      </ul>
+      <p class="note">Sechs Blicke auf die Ambivalenz.</p>
+    </div>
+  </section>
+
+  <!-- 5 -->
+  <section class="slide">
+    <div class="top"><span>Lernen</span><span>1 / 6</span></div>
+    <div class="body">
+      <h2>Verstehen oder überspringen</h2>
+      <div class="split">
+        <div class="dir a"><span class="tag">So kann es gehen</span>
+          <p>Ein Tutor, der zum dritten Mal erklärt – ohne Seufzen, im eigenen Tempo, um 23 Uhr.</p>
+          <p>Fragen stellen dürfen, die man vor der Klasse nie stellen würde.</p></div>
+        <div class="dir b"><span class="tag">So auch</span>
+          <p>Das Denken auslagern. Die Anstrengung überspringen, die Lernen ausmacht.</p>
+          <p>Eine Antwort haben und nichts verstanden haben.</p></div>
+      </div>
+      <p class="kern">Wer die Antwort bekommt, hat nicht unbedingt etwas gelernt.</p>
+    </div>
+  </section>
+
+  <!-- 6 -->
+  <section class="slide">
+    <div class="top"><span>Aufgaben</span><span>2 / 6</span></div>
+    <div class="body">
+      <h2>Was wir stellen</h2>
+      <div class="split">
+        <div class="dir a"><span class="tag">So kann es gehen</span>
+          <p>Aufgaben, die Denken sichtbar machen: begründen, vergleichen, im Gespräch verteidigen.</p>
+          <p>KI als Sparringspartner – nicht als Lieferant.</p></div>
+        <div class="dir b"><span class="tag">So auch</span>
+          <p>Aufgaben, die eine Maschine in Sekunden löst – und die wir trotzdem stellen.</p>
+          <p>Ein Wettrüsten aus Erkennungssoftware und Ausreden.</p></div>
+      </div>
+      <p class="kern">Wenn KI die Hausaufgabe lösen kann, war es vielleicht die falsche Hausaufgabe.</p>
+    </div>
+  </section>
+
+  <!-- 7 -->
+  <section class="slide">
+    <div class="top"><span>Rückmeldung</span><span>3 / 6</span></div>
+    <div class="body">
+      <h2>Feedback für alle – von wem?</h2>
+      <div class="split">
+        <div class="dir a"><span class="tag">So kann es gehen</span>
+          <p>Sofort, individuell, ohne Beschämung. Der dritte Entwurf statt des ersten.</p>
+          <p>Zeit, die für persönliche Rückmeldung frei wird.</p></div>
+        <div class="dir b"><span class="tag">So auch</span>
+          <p>Rückmeldung, die niemanden meint. Korrektur ohne Beziehung.</p>
+          <p>Ein Lob, das nichts wert ist, weil es immer kommt.</p></div>
+      </div>
+      <p class="kern">Feedback wirkt, weil jemand es sagt.</p>
+    </div>
+  </section>
+
+  <!-- 8 -->
+  <section class="slide">
+    <div class="top"><span>Gerechtigkeit</span><span>4 / 6</span></div>
+    <div class="body">
+      <h2>Wer profitiert?</h2>
+      <div class="split">
+        <div class="dir a"><span class="tag">So kann es gehen</span>
+          <p>Nachhilfe, die bisher Geld kostete. Sprachbarrieren, die kleiner werden.</p>
+          <p>Unterstützung für die, die zu Hause niemanden fragen können.</p></div>
+        <div class="dir b"><span class="tag">So auch</span>
+          <p>Wer schon kann, nutzt sie klug. Wer nicht, lässt sich ersetzen.</p>
+          <p>Bezahlversionen für die einen, Werbung für die anderen.</p></div>
+      </div>
+      <p class="kern">Die Schere schließt sich nicht von allein.</p>
+    </div>
+  </section>
+
+  <!-- 9 -->
+  <section class="slide">
+    <div class="top"><span>Wahrheit</span><span>5 / 6</span></div>
+    <div class="body">
+      <h2>Flüssig ist nicht richtig</h2>
+      <div class="split">
+        <div class="dir a"><span class="tag">So kann es gehen</span>
+          <p>Prüfen üben. Quellen suchen. Widersprechen lernen – an einem geduldigen Gegenüber.</p>
+          <p>Kritisches Denken bekommt endlich ein Objekt.</p></div>
+        <div class="dir b"><span class="tag">So auch</span>
+          <p>Plausibel klingender Unsinn. Erfundene Zitate mit sicherer Stimme.</p>
+          <p>Die Autorität des gut Formulierten.</p></div>
+      </div>
+      <p class="kern">Zweifeln muss man lernen. Das ist Unterricht.</p>
+    </div>
+  </section>
+
+  <!-- 10 -->
+  <section class="slide">
+    <div class="top"><span>Beziehung</span><span>6 / 6</span></div>
+    <div class="body">
+      <h2>Der ist immer da</h2>
+      <div class="split">
+        <div class="dir a"><span class="tag">So kann es gehen</span>
+          <p>Routinen abgeben. Zeit gewinnen für das, was nur Menschen können.</p>
+          <p>Mehr Gespräch, weniger Verwaltung.</p></div>
+        <div class="dir b"><span class="tag">So auch</span>
+          <p>Der Chatbot als Vertrauter. Freundlich, verfügbar, ohne Erwartungen.</p>
+          <p>Kinder, die lieber mit der Maschine reden als mit uns.</p></div>
+      </div>
+      <p class="kern">Was einfach ist, ersetzt leicht das, was wertvoll ist.</p>
+    </div>
+  </section>
+
+  <!-- 11 -->
+  <section class="slide">
+    <div class="top"><span>Risiken beim Namen nennen</span><span></span></div>
+    <div class="body">
+      <h2>Was wir verlieren können</h2>
+      <ul class="plain risk two">
+        <li>Abhängigkeit statt Fähigkeit</li>
+        <li>Die produktive Anstrengung</li>
+        <li>Datenspuren von Kindern</li>
+        <li>Verborgene Normen und Vorurteile</li>
+        <li>Gleichförmige Ergebnisse, gleichförmiges Denken</li>
+        <li>Bequemlichkeit – auch bei uns</li>
+      </ul>
+      <p class="note">Ehrlich: Manches davon wird passieren. Die Frage ist, wie viel – und ob wir hinsehen.</p>
+    </div>
+  </section>
+
+  <!-- 12 -->
+  <section class="slide">
+    <div class="top"><span>Was bleibt</span><span></span></div>
+    <div class="body">
+      <h2>Was KI nicht kann</h2>
+      <ul class="plain chance two">
+        <li>Ein Kind meinen</li>
+        <li>Verantwortung tragen</li>
+        <li>Vorbild sein</li>
+        <li>Merken, dass heute etwas nicht stimmt</li>
+        <li>Enttäuscht sein – und trotzdem bleiben</li>
+        <li>Etwas zumuten, weil man an jemanden glaubt</li>
+      </ul>
+      <p class="kern">Das bleibt unsere Arbeit. Und sie wird wichtiger, nicht unwichtiger.</p>
+    </div>
+  </section>
+
+  <!-- 13 -->
+  <section class="slide">
+    <div class="top"><span>Die eigentliche Herausforderung</span><span></span></div>
+    <div class="body">
+      <h2 class="wide">KI zwingt uns zu sagen, wozu Schule da ist.</h2>
+      <p class="lead">Wenn Wissen jederzeit abrufbar ist und Texte in Sekunden entstehen – was wollen wir dann eigentlich?</p>
+      <p class="note">Urteilen. Verstehen. Sich anstrengen können. Miteinander auskommen.</p>
+    </div>
+  </section>
+
+  <!-- 14 -->
+  <section class="slide">
+    <div class="top"><span>Kompetenzen</span><span></span></div>
+    <div class="body">
+      <h2>Was wichtiger wird</h2>
+      <ul class="plain">
+        <li>Gute Fragen stellen</li>
+        <li>Ergebnisse prüfen, nicht glauben</li>
+        <li>Erkennen, was fehlt</li>
+        <li>Entscheiden, wann man KI nicht benutzt</li>
+        <li>Der eigenen Stimme trauen</li>
+      </ul>
+      <p class="note">Nichts davon ist neu. Alles davon ist jetzt dringend.</p>
+    </div>
+  </section>
+
+  <!-- 15 -->
+  <section class="slide">
+    <div class="top"><span>Rolle</span><span></span></div>
+    <div class="body">
+      <h2 class="wide">Weniger Vortragende. Mehr Gegenüber.</h2>
+      <p class="lead">Wir sind nicht mehr die einzige Quelle. Aber wir sind die Person, die Maßstäbe setzt, Anstrengung zumutet und die Beziehung hält.</p>
+      <p class="note">Die Maschine antwortet. Wir fragen zurück.</p>
+    </div>
+  </section>
+
+  <!-- 16 -->
+  <section class="slide">
+    <div class="top"><span>Haltung</span><span></span></div>
+    <div class="body">
+      <p class="big">Angst macht blind.<br>Begeisterung auch.</p>
+      <p class="lead">Neugierig, kritisch, gelassen. Ausprobieren, bevor man urteilt. Urteilen, nachdem man ausprobiert hat.</p>
+    </div>
+  </section>
+
+  <!-- 17 -->
+  <section class="slide">
+    <div class="top"><span>Anfangen</span><span></span></div>
+    <div class="body">
+      <h2>Kleine Schritte, diese Woche</h2>
+      <ol class="steps">
+        <li>Selbst nutzen – dreißig Minuten, mit einer echten Aufgabe</li>
+        <li>Mit der Klasse darüber reden, statt es zu verbieten</li>
+        <li>Eine einzige Aufgabe umbauen</li>
+        <li>Regeln gemeinsam aushandeln – und aufschreiben</li>
+        <li>Im Kollegium teilen, was ging und was nicht</li>
+      </ol>
+    </div>
+  </section>
+
+  <!-- 18 -->
+  <section class="slide">
+    <div class="top"><span>Mut</span><span></span></div>
+    <div class="body">
+      <h2 class="wide">Wir haben Taschenrechner, Wikipedia und Smartphones überlebt.</h2>
+      <p class="lead">Ehrlich: Diesmal ist es größer. Aber gerade deshalb brauchen Kinder und Jugendliche uns – nicht weniger, sondern anders.</p>
+    </div>
+  </section>
+
+  <!-- 19 -->
+  <section class="slide">
+    <div class="top"><span>Für den eigenen Unterricht</span><span></span></div>
+    <div class="body">
+      <h2>Vier Leitfragen</h2>
+      <div class="questions">
+        <p>Was sollen sie hier ohne Hilfe können – und warum?</p>
+        <p>Wo darf KI helfen, wo nicht – und wissen das alle?</p>
+        <p>Woran merke ich, dass jemand verstanden hat?</p>
+        <p>Was mache ich mit der Zeit, die frei wird?</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 20 -->
+  <section class="slide">
+    <div class="top"><span></span><span></span></div>
+    <div class="body">
+      <p class="big">Die Richtung bestimmt nicht die Technik.<br><span class="a">Die bestimmen wir.</span></p>
+      <p class="note">Danke. Lassen Sie uns reden.</p>
+    </div>
+  </section>
+
+</div>
+
+<button class="nav prev" aria-label="Vorherige Folie"></button>
+<button class="nav next" aria-label="Nächste Folie"></button>
+<div class="hint" id="hint">→ / Leertaste · F für Vollbild</div>
+<div class="hud"><span>Wie KI uns pädagogisch herausfordert</span><span id="counter"></span></div>
+<div class="progress" id="progress"></div>
+
+<script>
+(function () {
+  var slides = Array.prototype.slice.call(document.querySelectorAll('.slide'));
+  var n = slides.length, i = 0;
+  var counter = document.getElementById('counter');
+  var progress = document.getElementById('progress');
+  var hint = document.getElementById('hint');
+
+  function show(k) {
+    i = Math.max(0, Math.min(n - 1, k));
+    slides.forEach(function (s, j) { s.classList.toggle('is-active', j === i); });
+    counter.textContent = (i + 1) + ' / ' + n;
+    progress.style.width = ((i + 1) / n * 100) + '%';
+    try { history.replaceState(null, '', '#' + (i + 1)); } catch (e) {}
+    if (i > 0) hint.classList.add('hide');
+  }
+  function next() { show(i + 1); }
+  function prev() { show(i - 1); }
+
+  document.querySelector('.nav.next').addEventListener('click', next);
+  document.querySelector('.nav.prev').addEventListener('click', prev);
+
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'PageDown' || e.key === 'Enter') { e.preventDefault(); next(); }
+    else if (e.key === 'ArrowLeft' || e.key === 'PageUp' || e.key === 'Backspace') { e.preventDefault(); prev(); }
+    else if (e.key === 'Home') show(0);
+    else if (e.key === 'End') show(n - 1);
+    else if (e.key === 'f' || e.key === 'F') {
+      var el = document.documentElement;
+      if (document.fullscreenElement) document.exitFullscreen && document.exitFullscreen();
+      else el.requestFullscreen && el.requestFullscreen();
+    }
+  });
+
+  var x0 = null;
+  document.addEventListener('touchstart', function (e) { x0 = e.touches[0].clientX; }, { passive: true });
+  document.addEventListener('touchend', function (e) {
+    if (x0 === null) return;
+    var dx = e.changedTouches[0].clientX - x0; x0 = null;
+    if (Math.abs(dx) > 40) (dx < 0 ? next : prev)();
+  }, { passive: true });
+
+  var start = parseInt((location.hash || '').replace('#', ''), 10);
+  show(isNaN(start) ? 0 : start - 1);
+  window.addEventListener('hashchange', function () {
+    var h = parseInt(location.hash.replace('#', ''), 10);
+    if (!isNaN(h) && h - 1 !== i) show(h - 1);
+  });
+})();
+</script>
+</body>
+</html>
